@@ -1,6 +1,6 @@
 import fs from "node:fs"
 import path from "node:path"
-import { connectionEntries, modelIds, restorationEntries, safeError } from "./config.js"
+import { connectionEntries, decodeConfigScalar, modelIds, restorationEntries, safeError } from "./config.js"
 import { discoverKeel } from "./keel-client.js"
 import { findDatabase, syncModelArchive } from "./model-archive.js"
 
@@ -111,8 +111,8 @@ export class KeelAdapter {
             timeoutMs: this.options.requestTimeoutMs,
           })
           const snapshot = await keel.getModelConfig()
-          const activeProvider = snapshot["models:active-provider-id"] ?? null
-          const activeModel = snapshot["models:active-model-id"] ?? null
+          const activeProvider = decodeConfigScalar(snapshot["models:active-provider-id"])
+          const activeModel = decodeConfigScalar(snapshot["models:active-model-id"])
           // A model the user picked in Keel after connecting is theirs. Only
           // roll back a selection that is still the one this adapter made.
           if (activeProvider !== this.providerId || activeModel !== this.lastAppliedModel) {

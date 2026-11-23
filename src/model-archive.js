@@ -13,19 +13,33 @@ const APP_NAMES = {
   22350: "Keel-公开版",
 }
 
+// Hong Cowork 0.146 listens on 213xx. The directory is the app's userData name.
+const CURRENT_APP_NAMES = {
+  21343: ["Hong Cowork-本地开发", "Keel-本地开发", "Cowork-本地开发", "Hong Cowork-开发版"],
+  21342: ["Hong Cowork-开发版", "Hong Cowork-Test", "Keel-开发版", "Keel-Test", "Cowork-开发版", "Hong"],
+  21340: ["Hong Cowork", "Hong", "Hong Cowork-公开版", "Keel", "Keel-公开版", "Cowork", "Cowork-公开版"],
+  21341: ["Hong Cowork", "Hong", "Keel"],
+}
+
 export function databaseCandidates(keelUrl, {
   home = os.homedir(),
   platform = process.platform,
   env = process.env,
 } = {}) {
   const port = Number(new URL(keelUrl).port || 80)
+  const currentNames = CURRENT_APP_NAMES[port]
   const appName = APP_NAMES[port]
-  if (!appName) return []
+  if (!currentNames && !appName) return []
   let base
   if (platform === "darwin") base = path.join(home, "Library", "Application Support")
   else if (platform === "win32") base = env.APPDATA
   else base = env.XDG_DATA_HOME || path.join(home, ".local", "share")
   if (!base) return []
+  if (currentNames) {
+    const files = currentNames.map((name) => path.join(base, name, "data", "agents.db"))
+    if (port === 21341) files.unshift(path.join(home, ".hong", "headless", "data", "agents.db"))
+    return files
+  }
   const legacyNames = {
     "Keel-本地开发": ["Cowork-本地开发", "Hong Cowork-开发版"],
     "Keel-开发版": ["Keel-Test", "Cowork-开发版", "Hong Cowork-开发版", "Hong"],
@@ -75,8 +89,10 @@ export function syncModelArchive({
   const db = new Database(file)
   try {
     db.exec("PRAGMA busy_timeout = 5000")
-    const provider = db.query("SELECT id FROM model_providers WHERE id = ? AND name = 'Magpie'").get(providerId)
-    if (!provider) throw new Error("The Magpie Provider is not in this Keel archive")
+    const provider = db.query("SELECT id, name FROM model_providers WHERE id = ?").get(providerId)
+    if (!provider || String(provider.name || "").trim().toLowerCase() !== "magpie") {
+      throw new Error("The Magpie Provider is not in this Keel archive")
+    }
     const previous = db.query("SELECT value FROM user_preferences WHERE key = 'model-registry-overlay'").get()
     const overlay = mergeRegistryOverlay(previous?.value, models, now.getTime())
     const timestamp = now.getTime()

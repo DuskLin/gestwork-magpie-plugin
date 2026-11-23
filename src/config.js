@@ -4,7 +4,8 @@ export const DEFAULT_OPTIONS = Object.freeze({
   requestTimeoutMs: 4000,
 })
 
-export const KEEL_PORTS = Object.freeze([22343, 22342, 22340, 22341])
+// Current Hong Cowork CLI order, then the legacy Keel 223xx ports.
+export const KEEL_PORTS = Object.freeze([21343, 21342, 21340, 21341, 22343, 22342, 22340, 22341])
 
 const integer = (value, fallback, min, max) =>
   Number.isInteger(value) && value >= min && value <= max ? value : fallback
@@ -120,13 +121,29 @@ export function connectionEntries(snapshot, providerId, models, selectedModel) {
     next[key] = [...currentModels, selectedModel]
     put("models:enabled-models-per-provider", next)
   }
-  if (snapshot["models:active-provider-id"] !== providerId) {
-    entries.push({ key: "models:active-provider-id", value: providerId })
+  if (decodeConfigScalar(snapshot["models:active-provider-id"]) !== providerId) {
+    entries.push({ key: "models:active-provider-id", value: encodeConfigScalar(providerId) })
   }
-  if (snapshot["models:active-model-id"] !== selectedModel) {
-    entries.push({ key: "models:active-model-id", value: selectedModel })
+  if (decodeConfigScalar(snapshot["models:active-model-id"]) !== selectedModel) {
+    entries.push({ key: "models:active-model-id", value: encodeConfigScalar(selectedModel) })
   }
   return entries
+}
+
+// Hong Cowork 0.146 stores every model-config value as JSON text. Older
+// builds stored a bare provider or model id, which JSON.parse rejects.
+export function decodeConfigScalar(value) {
+  if (value === undefined || value === null || value === "") return null
+  if (typeof value !== "string") return null
+  try {
+    const parsed = JSON.parse(value)
+    if (parsed === null || typeof parsed === "string") return parsed
+  } catch { /* Legacy raw id. */ }
+  return value
+}
+
+export function encodeConfigScalar(value) {
+  return value === null ? null : JSON.stringify(value)
 }
 
 export function restorationEntries(snapshot, backup) {

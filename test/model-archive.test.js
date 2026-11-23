@@ -41,6 +41,10 @@ describe("Keel model archive", () => {
     ])
     expect(databaseCandidates("http://127.0.0.1:22340", { home: "/home/test", platform: "darwin" })[0])
       .toBe("/home/test/Library/Application Support/Keel/data/agents.db")
+    expect(databaseCandidates("http://127.0.0.1:21342", { home: "/home/test", platform: "darwin" })[0])
+      .toBe("/home/test/Library/Application Support/Hong Cowork-开发版/data/agents.db")
+    expect(databaseCandidates("http://127.0.0.1:21341", { home: "/home/test", platform: "darwin" })[0])
+      .toBe("/home/test/.hong/headless/data/agents.db")
   })
 
   test("backs up and transactionally updates names, metadata and registry", () => {
@@ -62,5 +66,13 @@ describe("Keel model archive", () => {
     const file = archive()
     expect(() => syncModelArchive({ file, providerId: "another", models: [model], createBackup: false }))
       .toThrow(/not in this Keel archive/)
+  })
+
+  test("accepts the lowercase provider name created in Hong Cowork", () => {
+    const file = archive()
+    const db = new Database(file)
+    db.query("UPDATE model_providers SET name = 'magpie'").run()
+    db.close()
+    expect(() => syncModelArchive({ file, providerId: "magpie-id", models: [model], createBackup: false })).not.toThrow()
   })
 })

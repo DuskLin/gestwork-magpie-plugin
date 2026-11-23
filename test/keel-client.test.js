@@ -41,6 +41,35 @@ describe("Keel tRPC wire protocol", () => {
     expect(body.manualModels).toBeUndefined()
   })
 
+  test("keeps the name and protocol of an existing Magpie gateway", async () => {
+    let body
+    const client = new KeelClient("http://127.0.0.1:21342", {
+      fetchImpl: async (url, init) => {
+        const target = String(url)
+        if (target.includes("providers.list")) {
+          return reply([{ id: "magpie-id", type: "custom", name: "magpie" }])
+        }
+        if (target.includes("providers.get")) {
+          return reply({
+            id: "magpie-id",
+            name: "magpie",
+            baseUrl: "http://127.0.0.1:3425/v1",
+            protocol: "openai-responses",
+            authStyle: "bearer",
+          })
+        }
+        body = JSON.parse(init.body).json
+        return reply({ success: true, id: "magpie-id" })
+      },
+    })
+    expect(await client.addMagpie("http://127.0.0.1:3425/v1", "magpie-gestaworks")).toBe("magpie-id")
+    expect(body).toMatchObject({
+      name: "magpie",
+      protocol: "openai-responses",
+      authStyle: "bearer",
+    })
+  })
+
   test("honors addCustom's returned failure", async () => {
     const client = new KeelClient("http://127.0.0.1:22343", {
       fetchImpl: async () => reply({ success: false, error: "Gateway host not allowed" }),
@@ -74,13 +103,13 @@ describe("Keel discovery", () => {
       fetchImpl: async (url) => {
         const target = new URL(url)
         visited.push(target.port + target.pathname)
-        if (target.port === "22343") throw new Error("offline")
+        if (target.port === "21343") throw new Error("offline")
         if (target.pathname === "/healthz") return Response.json({ status: "ok" })
         return reply([])
       },
     })
-    expect(client.baseUrl).toBe("http://127.0.0.1:22342")
-    expect(visited).toEqual(["22343/healthz", "22342/healthz", "22342/providers.list"])
+    expect(client.baseUrl).toBe("http://127.0.0.1:21342")
+    expect(visited).toEqual(["21343/healthz", "21342/healthz", "21342/providers.list"])
   })
 
   test("does not fall through an explicitly configured endpoint", async () => {

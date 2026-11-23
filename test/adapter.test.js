@@ -93,8 +93,8 @@ describe("Keel adapter", () => {
     expect(keel.addMagpie).toHaveBeenCalledWith("http://127.0.0.1:3425/v1", "magpie-gestaworks")
     expect(keel.setModelConfig).toHaveBeenCalledTimes(1)
     const entries = keel.setModelConfig.mock.calls[0][0]
-    expect(entries).toContainEqual({ key: "models:active-provider-id", value: "magpie-provider" })
-    expect(entries).toContainEqual({ key: "models:active-model-id", value: "openai/gpt-5" })
+    expect(entries).toContainEqual({ key: "models:active-provider-id", value: JSON.stringify("magpie-provider") })
+    expect(entries).toContainEqual({ key: "models:active-model-id", value: JSON.stringify("openai/gpt-5") })
   })
 
   test("does not rewrite unchanged state and applies a model switch", async () => {

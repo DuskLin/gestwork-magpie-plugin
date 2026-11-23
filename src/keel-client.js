@@ -124,14 +124,37 @@ export class KeelClient {
     return providers
   }
 
+  async findCustomProvider(baseUrl) {
+    const wanted = String(baseUrl || "").replace(/\/$/, "")
+    let providers
+    try {
+      providers = await this.listProviders()
+    } catch {
+      return null
+    }
+    for (const provider of providers) {
+      if (!provider || provider.type !== "custom" || typeof provider.id !== "string") continue
+      let detail
+      try {
+        detail = await this.call("providers.get", { id: provider.id }, { query: true })
+      } catch {
+        continue
+      }
+      const current = String(detail?.baseUrl || "").replace(/\/$/, "")
+      if (detail && current === wanted) return detail
+    }
+    return null
+  }
+
   async addMagpie(baseUrl, apiKey) {
+    const existing = await this.findCustomProvider(baseUrl)
     const result = await this.call("providers.addCustom", {
-      name: "Magpie",
+      name: existing?.name || "Magpie",
       baseUrl,
       apiKey,
       skipValidation: false,
-      protocol: "openai-completions",
-      authStyle: "bearer",
+      protocol: existing?.protocol || "openai-completions",
+      authStyle: existing?.authStyle || "bearer",
     }, { timeoutMs: Math.max(this.timeoutMs, 15000) })
     if (!result?.success || typeof result.id !== "string" || !result.id) {
       throw new KeelError(result?.error || "Keel could not add the Magpie provider", { code: "add_failed" })

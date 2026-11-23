@@ -30,8 +30,10 @@ describe("configuration", () => {
     ]) expect(() => normalizeLoopbackUrl(value)).toThrow()
   })
 
-  test("uses the same Keel port order as its CLI", () => {
+  test("uses the current Hong Cowork port order, then legacy Keel ports", () => {
     expect(keelCandidates("")).toEqual([
+      "http://127.0.0.1:21343", "http://127.0.0.1:21342",
+      "http://127.0.0.1:21340", "http://127.0.0.1:21341",
       "http://127.0.0.1:22343", "http://127.0.0.1:22342",
       "http://127.0.0.1:22340", "http://127.0.0.1:22341",
     ])
@@ -53,8 +55,8 @@ describe("Agent connection", () => {
       { key: "models:enabled-provider-ids", value: '["existing","magpie-id"]' },
       { key: "models:disabled-provider-ids", value: '["other-off"]' },
       { key: "models:enabled-models-per-provider", value: '{"existing":["one"],"magpie-id":["openai/gpt-5"]}' },
-      { key: "models:active-provider-id", value: "magpie-id" },
-      { key: "models:active-model-id", value: "openai/gpt-5" },
+      { key: "models:active-provider-id", value: JSON.stringify("magpie-id") },
+      { key: "models:active-model-id", value: JSON.stringify("openai/gpt-5") },
     ])
   })
 
@@ -78,7 +80,7 @@ describe("Agent connection", () => {
     }, "magpie-id", ["chosen", "new-model"], "new-model")
     expect(entries).toEqual([
       { key: "models:enabled-models-per-provider", value: '{"magpie-id":["chosen","new-model"]}' },
-      { key: "models:active-model-id", value: "new-model" },
+      { key: "models:active-model-id", value: JSON.stringify("new-model") },
     ])
   })
 
@@ -87,8 +89,18 @@ describe("Agent connection", () => {
       "models:enabled-provider-ids": '["old-provider"]',
       "models:enabled-models-per-provider": '{"old-provider":["old-model"]}',
     }, "magpie-id", ["kimi-code-cn/k3.1-pro"], "kimi-code-cn/k3.1-pro")
-    expect(entries).toContainEqual({ key: "models:active-provider-id", value: "magpie-id" })
-    expect(entries).toContainEqual({ key: "models:active-model-id", value: "kimi-code-cn/k3.1-pro" })
+    expect(entries).toContainEqual({ key: "models:active-provider-id", value: JSON.stringify("magpie-id") })
+    expect(entries).toContainEqual({ key: "models:active-model-id", value: JSON.stringify("kimi-code-cn/k3.1-pro") })
+  })
+
+  test("treats JSON-encoded active values from Hong Cowork 0.146 as already applied", () => {
+    expect(connectionEntries({
+      "models:enabled-provider-ids": '["magpie-id"]',
+      "models:disabled-provider-ids": "[]",
+      "models:enabled-models-per-provider": '{"magpie-id":["chosen"]}',
+      "models:active-provider-id": JSON.stringify("magpie-id"),
+      "models:active-model-id": JSON.stringify("chosen"),
+    }, "magpie-id", ["chosen"], "chosen")).toEqual([])
   })
 
   test("fails closed on malformed configuration", () => {
