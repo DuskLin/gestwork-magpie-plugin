@@ -1,6 +1,6 @@
 {
   "name": "gestwork-magpie-plugin",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "GestaWorks / Keel as a Magpie Agent",
   "type": "module",
   "main": "./index.js",

@@ -26,7 +26,13 @@ export function databaseCandidates(keelUrl, {
   else if (platform === "win32") base = env.APPDATA
   else base = env.XDG_DATA_HOME || path.join(home, ".local", "share")
   if (!base) return []
-  const names = port === 22342 ? [appName, "Keel-Test"] : port === 22340 ? [appName, "Keel-公开版"] : [appName]
+  const legacyNames = {
+    "Keel-本地开发": ["Cowork-本地开发", "Hong Cowork-开发版"],
+    "Keel-开发版": ["Keel-Test", "Cowork-开发版", "Hong Cowork-开发版", "Hong"],
+    "Keel": ["Keel-公开版", "Cowork", "Cowork-公开版", "Hong Cowork-公开版", "Hong"],
+    "Keel-公开版": ["Cowork-公开版", "Hong Cowork-公开版"],
+  }
+  const names = [appName, ...(legacyNames[appName] || [])]
   return names.map((name) => path.join(base, name, "data", "agents.db"))
 }
 

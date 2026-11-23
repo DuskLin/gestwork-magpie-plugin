@@ -48,7 +48,7 @@ function fakeKeel() {
 
 describe("Magpie Agent declaration", () => {
   test("adds GestaWorks to the Agents page with a model field", () => {
-    expect(agent).toMatchObject({ id: "gestaworks", name: "GestaWorks", model: "model", dir: "~/.keel" })
+    expect(agent).toMatchObject({ id: "gestaworks", name: "GestaWorks", model: "model", dir: "~/.hong" })
     expect(agent.config.endsWith("connection.json")).toBe(true)
   })
 

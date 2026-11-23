@@ -35,6 +35,9 @@ describe("Keel model archive", () => {
     expect(databaseCandidates("http://127.0.0.1:22342", { home: "/home/test", platform: "darwin" })).toEqual([
       "/home/test/Library/Application Support/Keel-开发版/data/agents.db",
       "/home/test/Library/Application Support/Keel-Test/data/agents.db",
+      "/home/test/Library/Application Support/Cowork-开发版/data/agents.db",
+      "/home/test/Library/Application Support/Hong Cowork-开发版/data/agents.db",
+      "/home/test/Library/Application Support/Hong/data/agents.db",
     ])
     expect(databaseCandidates("http://127.0.0.1:22340", { home: "/home/test", platform: "darwin" })[0])
       .toBe("/home/test/Library/Application Support/Keel/data/agents.db")

@@ -5,9 +5,9 @@ export const agent = {
   id: "gestaworks",
   name: "GestaWorks",
   config: "~/.config/magpie-gestaworks/connection.json",
-  // Keel's stable desktop userData directory. Do not require the optional
-  // CLI: this integration only configures the running desktop application.
-  dir: "~/.keel",
+  // Legacy Hong's stable desktop data directory. Current Keel releases keep
+  // a ~/.hong symlink to ~/.keel, so this detects both old and new installs.
+  dir: "~/.hong",
   model: "model",
   ua: ["gestaworks", "keel"],
   notice: "Start GestaWorks before connecting. Restart it after the first sync to load Magpie's display names and model capabilities.",
