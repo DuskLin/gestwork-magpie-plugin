@@ -10,7 +10,7 @@ export const agent = {
   dir: "~/.keel",
   model: "model",
   ua: ["gestaworks", "keel"],
-  notice: "Start GestaWorks before connecting. The plugin applies changes to its running local backend.",
+  notice: "Start GestaWorks before connecting. Restart it after the first sync to load Magpie's display names and model capabilities.",
 }
 
 export function connect({ gateway, models }) {

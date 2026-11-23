@@ -2,6 +2,7 @@ import fs from "node:fs"
 import path from "node:path"
 import { connectionEntries, modelIds, restorationEntries, safeError } from "./config.js"
 import { discoverKeel } from "./keel-client.js"
+import { findDatabase, syncModelArchive } from "./model-archive.js"
 
 export function readConnection(file) {
   let raw
@@ -50,12 +51,18 @@ export class KeelAdapter {
     logger = () => {},
     discover = discoverKeel,
     read = readConnection,
+    archive = syncModelArchive,
+    locateArchive = findDatabase,
+    readCatalog,
   }) {
     this.file = file
     this.options = options
     this.logger = logger
     this.discover = discover
     this.read = read
+    this.archive = archive
+    this.locateArchive = locateArchive
+    this.readCatalog = readCatalog
     this.applied = ""
     this.backup = null
     this.providerId = null
@@ -132,7 +139,10 @@ export class KeelAdapter {
         timeoutMs: this.options.requestTimeoutMs,
       })
       const providerId = await keel.addMagpie(desired.gateway.url, desired.gateway.key)
-      const models = modelIds(await keel.getModels(providerId, true))
+      const catalog = this.readCatalog
+        ? await this.readCatalog(desired.gateway)
+        : await this.readMagpieCatalog(desired.gateway)
+      const models = modelIds(catalog)
       if (!models.includes(desired.model)) {
         throw new Error(`The selected model ${desired.model} is not available in Magpie`)
       }
@@ -146,6 +156,8 @@ export class KeelAdapter {
       }
       const entries = connectionEntries(snapshot, providerId, models, desired.model)
       if (entries.length) await keel.setModelConfig(entries)
+      const archiveFile = this.locateArchive(keel.baseUrl, providerId)
+      this.archive({ file: archiveFile, providerId, models: catalog })
       this.providerId = providerId
       this.lastModel = desired.model
       this.lastAppliedModel = desired.model
@@ -156,6 +168,18 @@ export class KeelAdapter {
     } catch (error) {
       this.reportError(error)
     }
+  }
+
+  async readMagpieCatalog(gateway) {
+    const response = await fetch(`${gateway.url}/models`, {
+      headers: { accept: "application/json", authorization: `Bearer ${gateway.key}` },
+      redirect: "error",
+      signal: AbortSignal.timeout(Math.max(this.options.requestTimeoutMs, 15000)),
+    })
+    if (!response.ok) throw new Error(`Magpie's model catalog answered HTTP ${response.status}`)
+    const payload = await response.json()
+    if (!Array.isArray(payload?.data)) throw new Error("Magpie returned an invalid model catalog")
+    return payload.data.filter((model) => model && typeof model.id === "string" && (!model.kind || model.kind === "chat"))
   }
 
   restoreBackup() {

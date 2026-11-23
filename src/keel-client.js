@@ -139,7 +139,7 @@ export class KeelClient {
     return result.id
   }
 
-  async getModels(providerId, forceRefresh = true) {
+  async getModelCatalog(providerId, forceRefresh = true) {
     const result = await this.call("providers.getModels", { providerId, forceRefresh }, {
       query: true,
       timeoutMs: Math.max(this.timeoutMs, 15000),
@@ -151,6 +151,10 @@ export class KeelClient {
       throw new KeelError(String(result.error), { code: "models_failed" })
     }
     return result.models
+  }
+
+  async getModels(providerId, forceRefresh = true) {
+    return this.getModelCatalog(providerId, forceRefresh)
   }
 
   async getModelConfig() {

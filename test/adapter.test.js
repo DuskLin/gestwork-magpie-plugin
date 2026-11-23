@@ -14,6 +14,14 @@ const connected = (model = "openai/gpt-5") => ({
 })
 
 const testFile = () => path.join(fs.mkdtempSync(path.join(os.tmpdir(), "gestaworks-agent-")), "connection.json")
+const testArchive = () => ({
+  archive: () => {},
+  locateArchive: () => "/tmp/test-agents.db",
+  readCatalog: async () => [
+    { id: "openai/gpt-5", display_name: "GPT-5", context_window: 400000 },
+    { id: "anthropic/claude", display_name: "Claude", context_window: 200000 },
+  ],
+})
 
 function fakeKeel() {
   const keel = {    baseUrl: "http://127.0.0.1:22343",
@@ -79,11 +87,10 @@ describe("Keel adapter", () => {
   test("applies the Agent row's model to Keel", async () => {
     const keel = fakeKeel()
     const adapter = new KeelAdapter({
-      file: testFile(), options: normalizeOptions(), read: () => connected(), discover: async () => keel,
+      file: testFile(), options: normalizeOptions(), read: () => connected(), discover: async () => keel, ...testArchive(),
     })
     await adapter.tick()
     expect(keel.addMagpie).toHaveBeenCalledWith("http://127.0.0.1:3425/v1", "magpie-gestaworks")
-    expect(keel.getModels).toHaveBeenCalledWith("magpie-provider", true)
     expect(keel.setModelConfig).toHaveBeenCalledTimes(1)
     const entries = keel.setModelConfig.mock.calls[0][0]
     expect(entries).toContainEqual({ key: "models:active-provider-id", value: "magpie-provider" })
@@ -94,7 +101,7 @@ describe("Keel adapter", () => {
     const keel = fakeKeel()
     let desired = connected()
     const adapter = new KeelAdapter({
-      file: testFile(), options: normalizeOptions(), read: () => desired, discover: async () => keel,
+      file: testFile(), options: normalizeOptions(), read: () => desired, discover: async () => keel, ...testArchive(),
     })
     await adapter.tick()
     await adapter.tick()
@@ -109,7 +116,7 @@ describe("Keel adapter", () => {
     const keel = fakeKeel()
     let desired = connected()
     const adapter = new KeelAdapter({
-      file: testFile(), options: normalizeOptions(), read: () => desired, discover: async () => keel,
+      file: testFile(), options: normalizeOptions(), read: () => desired, discover: async () => keel, ...testArchive(),
     })
     await adapter.tick()
     desired = { enabled: false, model: "", gateway: null, models: [] }
@@ -128,7 +135,7 @@ describe("Keel adapter", () => {
     let offline = false
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gestaworks-agent-"))
     const adapter = new KeelAdapter({
-      file: path.join(dir, "connection.json"), options: normalizeOptions(), read: () => desired,
+      file: path.join(dir, "connection.json"), options: normalizeOptions(), read: () => desired, ...testArchive(),
       discover: async () => { if (offline) throw new Error("offline"); return keel },
     })
     await adapter.tick()
@@ -147,7 +154,7 @@ describe("Keel adapter", () => {
     let desired = connected()
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), "gestaworks-agent-"))
     const file = path.join(dir, "connection.json")
-    const first = new KeelAdapter({ file, options: normalizeOptions(), read: () => desired, discover: async () => keel })
+    const first = new KeelAdapter({ file, options: normalizeOptions(), read: () => desired, discover: async () => keel, ...testArchive() })
     await first.tick()
     desired = { enabled: false, model: "", gateway: null, models: [] }
     const second = new KeelAdapter({ file, options: normalizeOptions(), read: () => desired, discover: async () => keel })
@@ -160,7 +167,7 @@ describe("Keel adapter", () => {
     const keel = fakeKeel()
     let offline = true
     const adapter = new KeelAdapter({
-      file: testFile(), options: normalizeOptions(), read: () => connected(),
+      file: testFile(), options: normalizeOptions(), read: () => connected(), ...testArchive(),
       discover: async () => { if (offline) throw new Error("offline"); return keel },
     })
     await adapter.tick()
