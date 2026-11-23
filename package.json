@@ -1,0 +1,49 @@
+{
+  "name": "gestwork-magpie-plugin",
+  "version": "0.1.0",
+  "description": "GestaWorks / Keel as a Magpie Agent",
+  "type": "module",
+  "main": "./index.js",
+  "files": [
+    "index.js",
+    "gestaworks.agent.js",
+    "src/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "bun test",
+    "check": "node --check index.js && node --check gestaworks.agent.js && node --check src/config.js && node --check src/keel-client.js && node --check src/adapter.js"
+  },
+  "keywords": [
+    "magpie",
+    "magpie-plugin",
+    "magpie-agent",
+    "keel",
+    "gestaworks",
+    "opencode",
+    "opencode-plugin"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DuskLin/gestwork-magpie-plugin.git"
+  },
+  "license": "MIT",
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "magpie": {
+    "name": "GestaWorks",
+    "summary": {
+      "en": "Add GestaWorks / Keel to Magpie's Agents page and use your Magpie models.",
+      "zh": "把 GestaWorks / Keel 加到 Magpie 的 Agent 页，直接使用 Magpie 模型。"
+    },
+    "icon": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23111'/%3E%3Cpath d='M14 18h10l8 12 8-12h10L36 36v12h-8V36z' fill='%23fff'/%3E%3C/svg%3E",
+    "agent": "./gestaworks.agent.js",
+    "options": {
+      "keelUrl": "",
+      "pollMs": 1000,
+      "requestTimeoutMs": 4000
+    }
+  }
+}
