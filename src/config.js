@@ -93,11 +93,17 @@ export function connectionEntries(snapshot, providerId, models, selectedModel) {
   if (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot)) {
     throw new Error("Keel returned an invalid model configuration")
   }
-  const enabled = parseStringArray(snapshot["models:enabled-provider-ids"])
-  const disabled = parseStringArray(snapshot["models:disabled-provider-ids"])
-  const modelMap = parseModelMap(snapshot["models:enabled-models-per-provider"])
-  if (!enabled || !disabled || !modelMap) {
-    throw new Error("Keel's model configuration is malformed; nothing was changed")
+  const enabled = parseStringArray(snapshot["models:enabled-provider-ids"]) ?? []
+  const disabled = parseStringArray(snapshot["models:disabled-provider-ids"]) ?? []
+  const modelMap = parseModelMap(snapshot["models:enabled-models-per-provider"]) ?? {}
+  for (const [key, value, valid] of [
+    ["models:enabled-provider-ids", snapshot["models:enabled-provider-ids"], parseStringArray(snapshot["models:enabled-provider-ids"])],
+    ["models:disabled-provider-ids", snapshot["models:disabled-provider-ids"], parseStringArray(snapshot["models:disabled-provider-ids"])],
+    ["models:enabled-models-per-provider", snapshot["models:enabled-models-per-provider"], parseModelMap(snapshot["models:enabled-models-per-provider"])],
+  ]) {
+    if (value !== undefined && value !== null && value !== "" && valid === undefined) {
+      throw new Error(`Keel's ${key} configuration is malformed; nothing was changed`)
+    }
   }
   const entries = []
   const put = (key, value) => entries.push({ key, value: JSON.stringify(value) })

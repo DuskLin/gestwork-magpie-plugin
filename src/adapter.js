@@ -147,6 +147,8 @@ export class KeelAdapter {
         throw new Error(`The selected model ${desired.model} is not available in Magpie`)
       }
       const snapshot = await keel.getModelConfig()
+      const archiveFile = this.locateArchive(keel.baseUrl, providerId)
+      this.archive({ file: archiveFile, providerId, models: catalog })
       if (!this.backup) {
         this.backup = {
           "models:active-provider-id": snapshot["models:active-provider-id"] ?? null,
@@ -156,8 +158,6 @@ export class KeelAdapter {
       }
       const entries = connectionEntries(snapshot, providerId, models, desired.model)
       if (entries.length) await keel.setModelConfig(entries)
-      const archiveFile = this.locateArchive(keel.baseUrl, providerId)
-      this.archive({ file: archiveFile, providerId, models: catalog })
       this.providerId = providerId
       this.lastModel = desired.model
       this.lastAppliedModel = desired.model

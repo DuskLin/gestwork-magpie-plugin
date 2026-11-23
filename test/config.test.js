@@ -82,6 +82,15 @@ describe("Agent connection", () => {
     ])
   })
 
+  test("accepts missing optional keys in an existing Keel configuration", () => {
+    const entries = connectionEntries({
+      "models:enabled-provider-ids": '["old-provider"]',
+      "models:enabled-models-per-provider": '{"old-provider":["old-model"]}',
+    }, "magpie-id", ["kimi-code-cn/k3.1-pro"], "kimi-code-cn/k3.1-pro")
+    expect(entries).toContainEqual({ key: "models:active-provider-id", value: "magpie-id" })
+    expect(entries).toContainEqual({ key: "models:active-model-id", value: "kimi-code-cn/k3.1-pro" })
+  })
+
   test("fails closed on malformed configuration", () => {
     expect(() => connectionEntries({ "models:enabled-provider-ids": "bad" }, "id", ["m"], "m")).toThrow(/malformed/)
   })
