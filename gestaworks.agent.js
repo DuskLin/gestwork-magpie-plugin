@@ -5,8 +5,10 @@ export const agent = {
   id: "gestaworks",
   name: "GestaWorks",
   config: "~/.config/magpie-gestaworks/connection.json",
+  // Keel's stable desktop userData directory. Do not require the optional
+  // CLI: this integration only configures the running desktop application.
+  dir: "~/.keel",
   model: "model",
-  bin: "keel",
   ua: ["gestaworks", "keel"],
   notice: "Start GestaWorks before connecting. The plugin applies changes to its running local backend.",
 }
